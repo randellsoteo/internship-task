@@ -3,38 +3,72 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Applicant;
+use Illuminate\Support\Facades\Storage;
 
 class ApplicantController extends Controller
 {
-    public function index()
-{
-    // READ: Get all applicants, latest first
-    return response()->json(\App\Models\Applicant::latest()->get());
-}
+    // READ + SEARCH
+    public function index(Request $request)
+    {
+        $query = Applicant::latest();
 
-public function store(Request $request)
-{
-    // Validation
-    $request->validate([
-        'name' => 'required',
-        'school' => 'required',
-        'resume' => 'required|file|mimes:pdf,doc,docx|max:2048', // Max 2MB
-    ]);
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('school', 'like', "%{$search}%");
+        }
 
-    // Handle File Upload
-    $path = null;
-    if ($request->hasFile('resume')) {
-        // Save to 'public/resumes' folder
-        $path = $request->file('resume')->store('resumes', 'public');
+        return response()->json($query->get());
     }
 
-    // CREATE: Save to Database
-    $applicant = \App\Models\Applicant::create([
-        'name' => $request->name,
-        'school' => $request->school,
-        'resume_path' => $path,
-    ]);
+    // CREATE
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required',
+            'school' => 'required',
+            'resume' => 'required|file|mimes:pdf,doc,docx|max:2048',
+        ]);
 
-    return response()->json($applicant, 201);
-}
+        $path = $request->file('resume')->store('resumes', 'public');
+
+        $applicant = Applicant::create([
+            'name' => $request->name,
+            'school' => $request->school,
+            'resume_path' => $path,
+            'status' => 'Pending', // Default status
+        ]);
+
+        return response()->json($applicant, 201);
+    }
+
+    // UPDATE (Status)
+    public function update(Request $request, $id)
+    {
+        $applicant = Applicant::find($id);
+        
+        if ($applicant) {
+            $applicant->update($request->all());
+            return response()->json($applicant);
+        }
+        
+        return response()->json(['message' => 'Not found'], 404);
+    }
+
+    // DELETE
+    public function destroy($id)
+    {
+        $applicant = Applicant::find($id);
+
+        if ($applicant) {
+            // Optional: Delete the file from storage too
+            // Storage::disk('public')->delete($applicant->resume_path);
+            
+            $applicant->delete();
+            return response()->json(['message' => 'Deleted successfully']);
+        }
+
+        return response()->json(['message' => 'Not found'], 404);
+    }
 }

@@ -10,3 +10,5 @@ Route::get('/user', function (Request $request) {
 
 Route::get('/applicants', [ApplicantController::class, 'index']);
 Route::post('/applicants', [ApplicantController::class, 'store']);
+Route::put('/applicants/{id}', [ApplicantController::class, 'update']);   // New
+Route::delete('/applicants/{id}', [ApplicantController::class, 'destroy']); // New
