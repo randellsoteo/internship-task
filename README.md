@@ -1,54 +1,55 @@
-# Internship Application Portal
+Internship Application Portal
+=============================
 
-A Full Stack Application built with **Laravel 11** and **React (Vite)**.  
+A Full Stack Application built with **Laravel 11** and **React (Vite)**.
+
 Allows candidates to apply and Admin to view/download resumes.
 
----
+Tech Stack
+----------
 
-## 🛠 Tech Stack
+*   **Backend:** Laravel 11 (API), SQLite Database
+    
+*   **Frontend:** React.js, Tailwind CSS, Axios
+    
+*   **Features:** File Uploads, Admin Dashboard, REST API
+    
 
-* **Backend:** Laravel 11 (API), SQLite Database
-* **Frontend:** React.js, Tailwind CSS, Axios
-* **Features:** File Uploads, Admin Dashboard, REST API
+Setup Instructions
+------------------
 
----
-
-## ⚙️ Setup Instructions
-
-### 1. Clone the repo
-```bash
-git clone [YOUR_REPO_LINK_HERE]
-2. Backend Setup
-Bash
-
-cd backend
-composer install
-cp .env.example .env
-Create the SQLite database file
+### 1\. Clone the repo
 
 Bash
 
-touch database/database.sqlite
-Run Migrations
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   git clone [YOUR_REPO_LINK_HERE]   `
+
+### 2\. Backend Setup
+
+**Install dependencies and configure environment:**
 
 Bash
 
-php artisan migrate
-Link Storage (Crucial for file downloads)
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   cd backend  composer install  cp .env.example .env   `
+
+**Database & Storage Configuration:**
 
 Bash
 
-php artisan storage:link
-Start Server
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   # Create the SQLite database file  touch database/database.sqlite  # Run Migrations  php artisan migrate  # Link Storage (Crucial for file downloads)  php artisan storage:link   `
+
+**Start the Server:**
 
 Bash
 
-php artisan serve
-3. Frontend Setup
-Open a new terminal
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   php artisan serve   `
+
+### 3\. Frontend Setup
+
+_Open a new terminal_
+
+**Install dependencies and start development server:**
 
 Bash
 
-cd frontend
-npm install
-npm run dev
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   cd frontend  npm install  npm run dev   `
