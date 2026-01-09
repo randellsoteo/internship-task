@@ -22,7 +22,7 @@ Setup Instructions
 
 Bash
 
-`   git clone [YOUR_REPO_LINK_HERE]   `
+`   git clone https://github.com/randellsoteo/internship-task   `
 
 ### 2\. Backend Setup
 
