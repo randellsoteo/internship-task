@@ -17,7 +17,7 @@ function Navbar() {
               <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">
                 BB
               </div>
-              <span className="font-bold text-xl text-gray-800 tracking-tight">Black Bureau</span>
+              <span className="font-bold text-xl text-gray-800 tracking-tight">Black Bureau Platforms Inc.</span>
             </div>
           </div>
           <div className="flex items-center">
@@ -30,7 +30,7 @@ function Navbar() {
               </Link>
             ) : (
               <Link to="/admin" className="px-4 py-2 rounded-md bg-slate-100 text-slate-700 text-sm font-semibold hover:bg-slate-200 transition">
-                Admin Login
+                Admin Dashboard
               </Link>
             )}
           </div>
@@ -168,129 +168,186 @@ function ApplicationForm() {
   )
 }
 
-// --- PAGE: Admin Dashboard ---
+// --- COMPONENT 2: The Admin Dashboard (Enhanced) ---
 function AdminDashboard() {
   const [applicants, setApplicants] = useState([])
   const [search, setSearch] = useState('')
+  
+  // New States for Enhancements
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [sortBy, setSortBy] = useState('created_at')
+  const [sortOrder, setSortOrder] = useState('desc')
+  const [loading, setLoading] = useState(false)
 
-  const fetchApplicants = (searchTerm = '') => {
-    const url = searchTerm ? `/api/applicants?search=${searchTerm}` : '/api/applicants';
-    axios.get(url).then(res => setApplicants(res.data)).catch(err => console.error(err));
+  // Fetch data with all filters
+  const fetchApplicants = (searchTerm = search, pageNum = page, sort = sortBy, order = sortOrder) => {
+    setLoading(true);
+    // Build query string
+    const url = `/api/applicants?search=${searchTerm}&page=${pageNum}&sort_by=${sort}&sort_order=${order}`;
+    
+    axios.get(url)
+      .then(res => {
+        // Laravel paginate() wraps items in .data, and gives meta info
+        setApplicants(res.data.data);
+        setTotalPages(res.data.last_page);
+        setPage(res.data.current_page); // Sync with server
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
   }
 
-  useEffect(() => { fetchApplicants() }, []);
+  useEffect(() => {
+    fetchApplicants(search, 1); // Reset to page 1 on initial load
+  }, []);
 
+  // Handle Search
   const handleSearch = (e) => {
     setSearch(e.target.value);
-    fetchApplicants(e.target.value);
+    // Reset to page 1 when searching
+    fetchApplicants(e.target.value, 1, sortBy, sortOrder); 
   }
 
+  // Handle Sorting Click
+  const handleSort = (column) => {
+    const newOrder = (sortBy === column && sortOrder === 'asc') ? 'desc' : 'asc';
+    setSortBy(column);
+    setSortOrder(newOrder);
+    fetchApplicants(search, page, column, newOrder);
+  }
+
+  // Handle Page Change
+  const changePage = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+      fetchApplicants(search, newPage, sortBy, sortOrder);
+    }
+  }
+
+  // Status & Delete Handlers (Same as before)
   const handleDelete = async (id) => {
     if(!confirm('Delete this applicant?')) return;
-    try { await axios.delete(`/api/applicants/${id}`); fetchApplicants(search); } catch (e) { alert('Error'); }
+    try { await axios.delete(`/api/applicants/${id}`); fetchApplicants(); } catch (e) { alert('Error'); }
+  }
+  const handleStatusChange = async (id, newStatus) => {
+    try { await axios.put(`/api/applicants/${id}`, { status: newStatus }); fetchApplicants(); } catch (e) { alert('Error'); }
   }
 
-  const handleStatusChange = async (id, newStatus) => {
-    try { await axios.put(`/api/applicants/${id}`, { status: newStatus }); fetchApplicants(search); } catch (e) { alert('Error'); }
+  // Helper for Sort Icons
+  const SortIcon = ({ column }) => {
+    if (sortBy !== column) return <span className="ml-1 text-gray-300">↕</span>;
+    return sortOrder === 'asc' ? <span className="ml-1 text-indigo-600">↑</span> : <span className="ml-1 text-indigo-600">↓</span>;
   }
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        
-        {/* Header Section */}
         <div className="md:flex md:items-center md:justify-between mb-8">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-2xl font-bold leading-7 text-slate-900 sm:text-3xl sm:truncate">
-              Applicants
-            </h2>
-          </div>
-          <div className="mt-4 flex md:mt-0 md:ml-4">
-            <div className="relative rounded-md shadow-sm">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <input 
-                type="text" 
-                className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2" 
-                placeholder="Search candidates..." 
-                value={search}
-                onChange={handleSearch}
-              />
-            </div>
+          <h2 className="text-2xl font-bold text-slate-900">Applicants</h2>
+          <div className="mt-4 flex md:mt-0 md:ml-4 w-full md:w-auto">
+            <input 
+              type="text" 
+              className="w-full md:w-64 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm px-4 py-2" 
+              placeholder="Search candidates..." 
+              value={search}
+              onChange={handleSearch}
+            />
           </div>
         </div>
 
-        {/* Table Section */}
-        <div className="flex flex-col">
-          <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-            <div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-              <div className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Candidate</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">School</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resume</th>
-                      <th scope="col" className="relative px-6 py-3">
-                        <span className="sr-only">Edit</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {applicants.map((app) => (
-                      <tr key={app.id} className="hover:bg-slate-50 transition">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
-                              {app.name.charAt(0)}
-                            </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{app.name}</div>
-                              <div className="text-xs text-gray-500">Applied: {new Date(app.created_at).toLocaleDateString()}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{app.school}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <select 
-                            value={app.status || 'Pending'} 
-                            onChange={(e) => handleStatusChange(app.id, e.target.value)}
-                            className={`text-xs font-semibold rounded-full px-2 py-1 border-0 cursor-pointer
-                              ${app.status === 'Hired' ? 'bg-green-100 text-green-800' : 
-                                app.status === 'Rejected' ? 'bg-red-100 text-red-800' : 
-                                'bg-yellow-100 text-yellow-800'}`}
-                          >
-                            <option value="Pending">Pending</option>
-                            <option value="Interview">Interviewing</option>
-                            <option value="Hired">Hired</option>
-                            <option value="Rejected">Rejected</option>
-                          </select>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                             {/* 👇👇👇 REPLACE URL HERE 👇👇👇 */}
-                          <a href={`https://fluffy-fortnight-4j79rr5jq6jp27rx7-8000.app.github.dev/storage/${app.resume_path}`} target="_blank" className="text-indigo-600 hover:text-indigo-900 font-medium flex items-center gap-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            PDF
-                          </a>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button onClick={() => handleDelete(app.id)} className="text-red-600 hover:text-red-900">
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {applicants.length === 0 && <div className="text-center py-12 text-gray-500">No applicants found.</div>}
+        <div className="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-200 flex flex-col min-h-[400px]">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th onClick={() => handleSort('name')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none">
+                    Candidate <SortIcon column="name" />
+                  </th>
+                  <th onClick={() => handleSort('school')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none">
+                    School <SortIcon column="school" />
+                  </th>
+                  <th onClick={() => handleSort('status')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none">
+                    Status <SortIcon column="status" />
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resume</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {loading ? (
+                  <tr><td colSpan="5" className="text-center py-10 text-gray-500">Loading data...</td></tr>
+                ) : applicants.map((app) => (
+                  <tr key={app.id} className="hover:bg-slate-50 transition">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs">
+                          {app.name.charAt(0)}
+                        </div>
+                        <div className="ml-3">
+                          <div className="text-sm font-medium text-gray-900">{app.name}</div>
+                          <div className="text-xs text-gray-500">{new Date(app.created_at).toLocaleDateString()}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{app.school}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <select 
+                        value={app.status || 'Pending'} 
+                        onChange={(e) => handleStatusChange(app.id, e.target.value)}
+                        className={`text-xs font-semibold rounded-full px-2 py-1 border-0 cursor-pointer focus:ring-0
+                          ${app.status === 'Hired' ? 'bg-green-100 text-green-800' : 
+                            app.status === 'Rejected' ? 'bg-red-100 text-red-800' : 
+                            'bg-yellow-100 text-yellow-800'}`}
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Interview">Interview</option>
+                        <option value="Hired">Hired</option>
+                        <option value="Rejected">Rejected</option>
+                      </select>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-600 hover:text-indigo-900">
+                        {/* UPDATE URL HERE */}
+                      <a href={`https://fluffy-fortnight-4j79rr5jq6jp27rx7-8000.app.github.dev/storage/${app.resume_path}`} target="_blank" className="font-medium hover:underline">Download PDF</a>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button onClick={() => handleDelete(app.id)} className="text-red-600 hover:text-red-900">Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Pagination Footer */}
+          <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6 mt-auto">
+            <div className="flex items-center justify-between">
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Showing page <span className="font-medium">{page}</span> of <span className="font-medium">{totalPages}</span>
+                  </p>
+                </div>
+                <div>
+                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <button 
+                      onClick={() => changePage(page - 1)}
+                      disabled={page === 1}
+                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <span>Previous</span>
+                    </button>
+                    <button 
+                      onClick={() => changePage(page + 1)}
+                      disabled={page === totalPages}
+                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <span>Next</span>
+                    </button>
+                  </nav>
+                </div>
               </div>
             </div>
           </div>

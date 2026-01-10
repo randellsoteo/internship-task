@@ -8,18 +8,29 @@ use Illuminate\Support\Facades\Storage;
 
 class ApplicantController extends Controller
 {
-    // READ + SEARCH
+    // READ + SEARCH + SORT + PAGINATE
     public function index(Request $request)
     {
-        $query = Applicant::latest();
+        $query = Applicant::query();
 
+        // 1. Search
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where('name', 'like', "%{$search}%")
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
                   ->orWhere('school', 'like', "%{$search}%");
+            });
         }
 
-        return response()->json($query->get());
+        // 2. Sorting (Default: Latest first)
+        $sortField = $request->input('sort_by', 'created_at'); // name, school, status, created_at
+        $sortOrder = $request->input('sort_order', 'desc');    // asc or desc
+        
+        $query->orderBy($sortField, $sortOrder);
+
+        // 3. Pagination (5 items per page)
+        // This changes the JSON format! It wraps data in a 'data' array.
+        return response()->json($query->paginate(5));
     }
 
     // CREATE
